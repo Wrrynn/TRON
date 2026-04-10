@@ -1,0 +1,6 @@
+.glass-card {
+    backdrop-filter: blur(20px) saturate(145%);
+    -webkit-backdrop-filter: blur(20px) saturate(145%);
+    background-color: rgba(17, 25, 40, 0.2);
+    border: 1px solid transparent;
+}

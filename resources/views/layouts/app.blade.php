@@ -36,6 +36,8 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 14px;
             -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 0;
         }
 
         /* ── NAVBAR ── */
@@ -56,6 +58,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            margin: auto;
         }
 
         .nav-brand {
@@ -73,7 +76,7 @@
         }
 
         .nav-name {
-            font-size: 17px;
+            font-size: 32px;
             font-weight: 700;
             color: var(--white);
             letter-spacing: -0.3px;
@@ -155,7 +158,7 @@
 
         /* FORM GLOBALS */
         .fg { display: flex; flex-direction: column; gap: 6px; }
-        .fl { font-size: 12px; font-weight: 600; color: var(--text2); letter-spacing: .3px; }
+        .fl { font-size: 14px; font-weight: 600; color: var(--text2); letter-spacing: .3px; }
 
         .fi {
             width: 100%;
@@ -191,10 +194,11 @@
         .btn-full { width: 100%; padding: 13px; font-size: 15px; border-radius: 12px; }
         .btn-sm { padding: 7px 13px; font-size: 12px; border-radius: 8px; }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/glass.css') }}">
     @stack('styles')
 </head>
 <body>
-
+<!-- NAVBAR 
 <nav class="nav">
     <div class="nav-inner">
         <a href="{{ auth()->check() ? route('dashboard') : route('login') }}" class="nav-brand">
@@ -218,7 +222,7 @@
         </div>
     </div>
 </nav>
-
+-->
 <div class="toasts">
     @if(session('success'))
         <div class="toast toast-ok" onclick="this.remove()">✓ {{ session('success') }}</div>
@@ -228,7 +232,7 @@
     @endif
 </div>
 
-<div class="page">@yield('content')</div>
+<div class="">@yield('content')</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>

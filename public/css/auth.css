@@ -1,0 +1,223 @@
+    .auth-wrap {
+        height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        position: relative;
+    }
+
+    /* LEFT SIDE (BACKGROUND & TEXT)  */
+    .auth-left {
+        position: absolute;
+        overflow: hidden;
+        background: #111;
+        inset: 0;
+        z-index: 0;
+    }
+
+    #auth-map {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        filter: brightness(0.45) saturate(0.7);
+    }
+
+    .auth-left-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(10, 10, 10, 0.85) 0%, rgba(10, 10, 10, 0.2) 60%);
+        display: flex;
+        align-items: flex-end;
+        padding: 70px;
+        width: 50%;
+
+    }
+
+    .auth-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--purple);
+        color: white;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: .6px;
+        text-transform: uppercase;
+        padding: 5px 12px;
+        border-radius: 100px;
+        margin-bottom: 18px;
+        width: fit-content;
+    }
+
+    .auth-left-title {
+        font-size: clamp(32px, 3vw, 46px);
+        font-weight: 800;
+        color: white;
+        line-height: 1.15;
+        letter-spacing: -.5px;
+        margin-bottom: 12px;
+    }
+
+    .auth-left-title span {
+        color: rgba(255, 255, 255, .4);
+        font-weight: 300;
+        font-style: italic;
+    }
+
+    .auth-left-desc {
+        font-size: 14px;
+        color: rgba(255, 255, 255, .6);
+        line-height: 1.65;
+        max-width: 320px;
+    }
+
+.auth-header {
+    position: absolute;
+    top: 70px;  /* Samakan dengan padding auth-left-overlay */
+    left: 70px; /* Samakan dengan padding auth-left-overlay */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 20; /* Pastikan di atas overlay */
+    text-decoration: none; /* Jika nanti ingin dijadikan link ke home */
+}
+
+    .AppLogo {
+        width: 48px;
+        height: 48px;
+        background: var(--purple);
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 40px;
+        margin-top: 40px;
+    }
+
+    .AppTitle {
+        font-size: 42px;
+        font-weight: 700;
+        color: var(--white);
+        letter-spacing: -0.3px;
+        margin-top: 40px;
+    }
+
+    /* ================= RIGHT SIDE (FORM) ================= */
+    .auth-right {
+        background-color: rgba(0, 0, 0, 0.7);
+        grid-column: 2;
+        /* KUNCI UTAMA: Paksa elemen ini menempati kolom kanan (kolom 2) */
+        z-index: 10;
+        /* Pastikan selalu berada di atas auth-left (map) */
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+    }
+
+    .auth-box {
+        width: 100%;
+        max-width: 420px;
+        animation: fadeUp .35s ease;
+        padding: 40px;
+    }
+
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .auth-eyebrow {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text3);
+        letter-spacing: .8px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .auth-title {
+        font-size: clamp(28px, 2.2vw, 32px);
+        font-weight: 800;
+        color: var(--white);
+        margin-bottom: 26px;
+    }
+
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .check-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .check-row input[type=checkbox] {
+        accent-color: var(--purple);
+        width: 15px;
+        height: 15px;
+        cursor: pointer;
+    }
+
+    .check-row label {
+        font-size: 14px;
+        color: var(--text2);
+        cursor: pointer;
+    }
+
+    .auth-foot {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 15px;
+        color: var(--text2);
+    }
+
+    .auth-foot a {
+        color: var(--purple);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .auth-foot a:hover {
+        text-decoration: underline;
+    }
+
+    .alert-err {
+        background: rgba(239, 68, 68, .1);
+        border: 1px solid rgba(239, 68, 68, .2);
+        border-radius: 9px;
+        padding: 11px 14px;
+        font-size: 14px;
+        color: #f87171;
+        margin-bottom: 16px;
+    }
+
+    /* ================= RESPONSIVE ================= */
+    @media (max-width: 900px) {
+        .auth-wrap {
+            grid-template-columns: 1fr;
+        }
+
+        /* Di mobile, sembunyikan Teks Overlay-nya saja agar Map tetap jadi background di HP */
+        .auth-left-overlay {
+            display: none;
+        }
+
+
+        .auth-right {
+            grid-column: 1;
+            /* Kembalikan form ke kolom 1 (tengah) di layar HP */
+            padding: 30px 20px;
+        }
+    }

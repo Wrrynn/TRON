@@ -1,0 +1,59 @@
+.show-wrap { display:grid; grid-template-columns:1fr 1fr; height:calc(100vh - 58px); overflow:hidden; }
+.show-left { overflow-y:auto; background:#111114; }
+.show-left::-webkit-scrollbar { width:4px; }
+.show-left::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:4px; }
+.foto-header { position:relative; height:320px; overflow:hidden; }
+.foto-header-grid { display:grid; grid-template-columns:2fr 1fr; gap:3px; height:100%; }
+.foto-header-grid.single { grid-template-columns:1fr; }
+.foto-header img { width:100%; height:100%; object-fit:cover; display:block; }
+.foto-count { position:absolute; bottom:12px; left:12px; background:rgba(0,0,0,.6); backdrop-filter:blur(8px); color:white; font-size:12px; padding:4px 10px; border-radius:20px; }
+.btn-kembali { position:absolute; top:12px; left:12px; background:rgba(0,0,0,.5); backdrop-filter:blur(8px); color:white; text-decoration:none; font-size:13px; padding:6px 14px; border-radius:20px; border:1px solid rgba(255,255,255,.15); }
+.show-content { padding:24px 24px 60px; }
+.show-meta { display:flex; align-items:center; gap:16px; font-size:12px; color:rgba(255,255,255,.4); margin-bottom:14px; }
+.show-title { font-size:22px; font-weight:800; color:white; letter-spacing:-.3px; margin-bottom:6px; line-height:1.2; }
+.show-author { display:flex; align-items:center; gap:10px; margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,.07); }
+.author-av { width:34px; height:34px; background:#7c5cfc; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:white; font-size:13px; }
+.author-name { font-size:13px; font-weight:600; color:white; }
+.author-role { font-size:11px; color:rgba(255,255,255,.35); }
+.section-title { font-size:18px; font-weight:800; color:white; margin-bottom:14px; letter-spacing:-.2px; }
+.show-story { font-size:14px; color:rgba(255,255,255,.65); line-height:1.8; margin-bottom:28px; }
+.rute-item { display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); border-radius:10px; margin-bottom:8px; cursor:pointer; transition:all .18s; text-decoration:none; }
+.rute-item:hover { background:rgba(124,92,252,.1); border-color:rgba(124,92,252,.3); }
+.rute-item.active { border-color:#e8410a; background:rgba(232,65,10,.08); }
+.rute-num { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:white; flex-shrink:0; }
+.rute-text { font-size:13px; color:rgba(255,255,255,.8); flex:1; }
+.budget-section { margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; padding:4px 0; }
+.budget-amount { font-size:22px; font-weight:800; color:#7c5cfc; }
+.budget-label { font-size:14px; color:rgba(255,255,255,.5); font-weight:500; }
+.star-btn { font-size:28px; background:none; border:none; cursor:pointer; line-height:1; transition:color .15s; padding:0 2px; }
+.btn-hapus { background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.2); color:#f87171; padding:8px 16px; border-radius:8px; font-family:inherit; font-size:13px; cursor:pointer; }
+.show-right { position:relative; }
+.foto-header-grid a { display:block; height:100%; overflow:hidden; }
+.foto-header-grid a img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s; }
+.foto-header-grid a:hover img { transform:scale(1.03); }
+#detail-map { width:100%; height:100%; }
+.foto-slider { display:flex; height:100%; transition:transform .3s ease; }
+.foto-slide { min-width:100%; height:100%; overflow:hidden; flex-shrink:0; }
+.foto-slide img { width:100%; height:100%; object-fit:cover; display:block; }
+
+.slider-btn {
+    position:absolute; top:50%; transform:translateY(-50%);
+    background:rgba(0,0,0,.5); backdrop-filter:blur(8px);
+    border:none; color:white; font-size:24px; cursor:pointer;
+    width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    z-index:10;
+}
+.slider-prev { left:10px; }
+.slider-next { right:10px; }
+.slider-btn:hover { background:rgba(0,0,0,.75); }
+
+.slider-dots {
+    position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+    display:flex; gap:6px; z-index:10;
+}
+.slider-dot {
+    width:6px; height:6px; border-radius:50%;
+    background:rgba(255,255,255,.4); cursor:pointer; transition:all .2s;
+}
+.slider-dot.active { background:white; width:18px; border-radius:3px; }

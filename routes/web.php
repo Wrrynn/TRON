@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PostinganController;  
 
 /*
 | Web Routes - Tripmo
@@ -37,4 +38,15 @@ Route::middleware('auth')->group(function () {
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Postingan
+    Route::post('/post', [PostinganController::class, 'store'])->name('post.store');
+    Route::get('/post/{id}', [PostinganController::class, 'show'])->name('post.show');
+    Route::delete('/post/{id}', [PostinganController::class, 'destroy'])->name('post.destroy');
+    Route::post('/post/{id}/rate', [PostinganController::class, 'rate'])->name('post.rate');
+
+    Route::get('/post/{id}/edit', [PostinganController::class, 'edit'])->name('post.edit');
+    Route::put('/post/{id}', [PostinganController::class, 'update'])->name('post.update');
 });
+
+

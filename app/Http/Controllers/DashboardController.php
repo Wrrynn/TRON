@@ -15,9 +15,12 @@ class DashboardController extends Controller
      * Tampilkan halaman dashboard
      */
     public function index()
-    {
-        $user = Auth::user();
-
-        return view('dashboard.index', compact('user'));
-    }
+{
+    $user = Auth::user();
+    $postingan = \App\Models\Postingan::where('user_id', $user->id)
+                    ->with('photos')
+                    ->latest()
+                    ->get();
+    return view('dashboard.index', compact('user', 'postingan'));
+}
 }

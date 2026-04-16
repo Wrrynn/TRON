@@ -8,10 +8,8 @@
 @section('content')
 <div class="dash-wrap">
 
-    {{-- PETA --}}
     <div id="main-map"></div>
 
-    {{-- PANEL KIRI --}}
     <div class="side-panel" id="sidePanel">
         <button class="panel-close" onclick="closePanel()">✕</button>
 
@@ -25,20 +23,44 @@
                 </div>
             </div>
             <div class="pp-stats">
-                <div><span class="pp-stat-num">0</span><span class="pp-stat-label">Pengikut</span></div>
-                <div><span class="pp-stat-num">0</span><span class="pp-stat-label">Mengikuti</span></div>
-                <div><span class="pp-stat-num">0</span><span class="pp-stat-label">Jejak</span></div>
+                <div><span class="pp-stat-num">{{ $postingan->count() }}</span><span class="pp-stat-label">Jejak</span></div>
             </div>
             <div class="pp-btns">
                 <button class="pp-btn" disabled>Edit Profil</button>
                 <button class="pp-btn" disabled>Bagikan Profil</button>
-                <div class="pp-icon-btn">👤</div>
+                <div class="pp-icon-btn"></div>
             </div>
             <div class="pp-divider"></div>
-            <div class="pp-empty">
-                <span class="pp-empty-icon"></span>
-                <div class="pp-empty-text">Belum ada postingan perjalanan.<br>Tandai lokasi di peta dan mulai cerita!</div>
-            </div>
+            <div class="pp-divider"></div>
+
+@if($postingan->count() > 0)
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px">
+        @foreach($postingan as $p)
+            <a href="{{ route('post.show', $p->id) }}"
+   style="position:relative; aspect-ratio:1; overflow:hidden;
+          display:block; background:rgba(255,255,255,.05);
+          border-radius:8px">
+                @if($p->photos->first())
+                    <img src="{{ Storage::url($p->photos->first()->file_path) }}"
+                         style="width:100%;height:100%;object-fit:cover;display:block">
+                @else
+                    <div style="width:100%;height:100%;min-height:100px;
+                                display:flex;align-items:center;justify-content:center;
+                                color:rgba(255,255,255,.3);font-size:13px">Tanpa foto</div>
+                @endif
+                <div class="feed-overlay">
+                    <div style="font-size:11px;font-weight:600;color:white;text-align:center;padding:6px">{{ $p->title }}</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,.7)">{{ $p->location }}</div>
+                </div>
+            </a>
+        @endforeach
+    </div>
+@else
+    <div class="pp-empty">
+        <div class="pp-empty-text">Belum ada postingan.<br>Klik + untuk mulai.</div>
+    </div>
+@endif
+
             <form action="{{ route('logout') }}" method="POST" style="padding:20px 0 0">
                 @csrf
                 <button type="submit" class="pp-logout">Keluar dari Tripmo</button>
@@ -49,26 +71,74 @@
         <div id="panelSearch" class="panel-search" style="display:none">
             <div class="search-box">
                 <span style="color:rgba(255,255,255,.4)"></span>
-                <input type="text" placeholder="Cari...">
+                <input type="text" placeholder="Cari postingan atau tempat...">
             </div>
-            <div class="search-tabs">
-                <button class="search-tab active">Pengguna</button>
-                <button class="search-tab">Tempat</button>
-            </div>
-            <div class="search-empty">Ketik nama pengguna atau tempat untuk mencari.</div>
+            <div class="search-empty">Ketik untuk mencari.</div>
         </div>
 
-        {{-- People --}}
-        <div id="panelPeople" class="panel-people" style="display:none">
-            <div class="people-title">Jelajahi Traveler</div>
-            <div class="people-empty">Fitur ini akan hadir segera!</div>
+        {{-- Buat Postingan --}}
+        <div id="panelCreate" style="display:none; overflow-y:auto; height:100%">
+            <div style="padding:22px 20px 0 20px">
+                <div style="font-size:16px; font-weight:700; color:white; margin-bottom:3px"> Buat Postingan</div>
+                <div style="font-size:12px; color:rgba(255,255,255,.4); margin-bottom:20px">Ceritakan perjalananmu</div>
+            </div>
+
+            <form action="{{ route('post.store') }}" method="POST"
+                  enctype="multipart/form-data"
+                  style="padding:0 20px 40px; display:flex; flex-direction:column; gap:16px">
+                @csrf
+
+                <div>
+                    <div class="p-label">Judul</div>
+                    <input type="text" name="title" class="p-input" placeholder="Contoh: Travel ke Bandung" required>
+                </div>
+
+                <div>
+                    <div class="p-label">Tanggal</div>
+                    <input type="date" name="travel_date" class="p-input">
+                </div>
+
+                <div>
+                    <div class="p-label">Foto</div>
+                    <div class="p-upload" onclick="document.getElementById('pFoto').click()">
+                        <span style="font-size:22px"></span>
+                        <span style="font-size:12px; color:rgba(255,255,255,.4)">Klik untuk upload foto</span>
+                    </div>
+                    <input type="file" id="pFoto" name="photos[]" multiple accept="image/*"
+                           style="display:none" onchange="previewFoto(this)">
+                    <div id="pFotoPreview" style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px"></div>
+                </div>
+
+                <div>
+                    <div class="p-label">Cerita</div>
+                    <textarea name="story" class="p-input" rows="3" placeholder="Ceritakan pengalamanmu..."></textarea>
+                </div>
+
+                <div>
+                    <div class="p-label">Rute Destinasi</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,.3); margin-bottom:8px">Tambah lokasi satu per satu</div>
+                    <div style="display:flex; gap:6px; margin-bottom:6px">
+                        <input type="text" id="pDestInput" class="p-input" placeholder=" Cari lokasi..." style="flex:1">
+                        <button type="button" onclick="tambahDest()" class="p-add-btn">+</button>
+                    </div>
+                    <div id="destSaran" style="display:none; background:rgba(20,20,30,.98);
+                         border:1px solid rgba(255,255,255,.1); border-radius:8px;
+                         overflow:hidden; margin-bottom:8px"></div>
+                    <div id="listDest"></div>
+                    <input type="hidden" name="destinations" id="destData">
+                    <input type="hidden" name="location" id="lokasiUtama">
+                </div>
+
+                <div>
+                    <div class="p-label">Total Budget (Rp)</div>
+                    <input type="number" name="total_budget" class="p-input" placeholder="Contoh: 2500000" min="0">
+                </div>
+
+                <button type="submit" class="p-submit-btn">Posting Sekarang </button>
+            </form>
         </div>
     </div>
 
-    {{-- KOORDINAT --}}
-    <div class="coord-badge" id="coordBadge"> Klik peta untuk tandai lokasi</div>
-
-    {{-- BOTTOM BAR --}}
     <div class="bottom-bar">
         <div class="bar-capsule">
             <button class="bar-btn" id="btnProfile" onclick="openPanel('profile')" title="Profil">
@@ -77,15 +147,12 @@
             <button class="bar-btn" id="btnSearch" onclick="openPanel('search')" title="Cari">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
             </button>
-            <button class="bar-btn" id="btnPeople" onclick="openPanel('people')" title="Traveler">
-                <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-            </button>
-            <button class="bar-btn" disabled style="opacity:.4" title="Pengaturan">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </button>
         </div>
-        <div class="bar-single" id="btnPin" title="Tandai Lokasi">
-            <svg viewBox="0 0 24 24" style="stroke:rgba(255,255,255,0.65);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;width:22px;height:22px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <div class="bar-single" id="btnCreate" onclick="openPanel('create')"
+             style="background:#7c5cfc; border-color:#7c5cfc; cursor:pointer" title="Buat Postingan">
+            <svg viewBox="0 0 24 24" style="stroke:white;fill:none;stroke-width:2.5;stroke-linecap:round;width:22px;height:22px">
+                <path d="M12 5v14M5 12h14"/>
+            </svg>
         </div>
     </div>
 

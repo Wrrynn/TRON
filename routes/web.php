@@ -3,7 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PostinganController;  
+use App\Http\Controllers\PostinganController; 
+use App\Models\User; 
 
 /*
 | Web Routes - Tripmo
@@ -47,6 +48,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/post/{id}/edit', [PostinganController::class, 'edit'])->name('post.edit');
     Route::put('/post/{id}', [PostinganController::class, 'update'])->name('post.update');
+
+    Route::get('/search', [PostinganController::class, 'search'])->name('post.search');
+    Route::get('/profile/{id}', function ($id) {
+    $user = User::findOrFail($id);
+    return view('profile', compact('user'));
+})->name('profile.show');
 });
 
 

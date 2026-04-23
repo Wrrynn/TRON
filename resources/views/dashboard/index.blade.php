@@ -27,7 +27,7 @@
             </div>
             <div class="pp-btns">
                 <button class="pp-btn" disabled>Edit Profil</button>
-                <button class="pp-btn" disabled>Bagikan Profil</button>
+                <button class="pp-btn" onclick="shareProfile()">Bagikan Profil</button>
                 <div class="pp-icon-btn"></div>
             </div>
             <div class="pp-divider"></div>
@@ -67,15 +67,30 @@
             </form>
         </div>
 
-        {{-- Search --}}
-        <div id="panelSearch" class="panel-search" style="display:none">
-            <div class="search-box">
-                <span style="color:rgba(255,255,255,.4)"></span>
-                <input type="text" placeholder="Cari postingan atau tempat...">
-            </div>
-            <div class="search-empty">Ketik untuk mencari.</div>
+{{-- Search --}}
+<div id="panelSearch" class="panel-search" style="display:none">
+    <div style="padding: 22px 20px 0">
+        <div style="font-size:16px; font-weight:700; color:white; margin-bottom:12px">Temukan Jejak</div>
+        <div class="search-box" style="display:flex; align-items:center; gap:8px;
+             background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
+             border-radius:12px; padding:10px 14px">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:rgba(255,255,255,.4);fill:none;stroke-width:2;flex-shrink:0">
+                <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Cari lokasi... (contoh: Bandung)"
+                   style="background:none; border:none; outline:none; color:white;
+                          font-size:14px; width:100%"
+                   oninput="handleSearch(this.value)">
+            <span id="searchSpinner" style="display:none; font-size:12px; color:rgba(255,255,255,.3)">...</span>
         </div>
+    </div>
 
+    <div id="searchResults" style="padding:12px 20px 40px; overflow-y:auto; max-height:calc(100vh - 120px)">
+        <div style="text-align:center; padding:40px 0; color:rgba(255,255,255,.3); font-size:13px">
+            Ketik nama lokasi untuk menemukan jejak perjalanan.
+        </div>
+    </div>
+</div>
         {{-- Buat Postingan --}}
         <div id="panelCreate" style="display:none; overflow-y:auto; height:100%">
             <div style="padding:22px 20px 0 20px">
@@ -160,5 +175,9 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/dashboard.js') }}"></script>
+<script>
+    const profileUrl = "{{ route('profile.show', $user->id) }}";
+</script>
+
+<script src="{{ asset('js/dashboard.js') }}"></script>
 @endpush

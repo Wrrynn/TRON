@@ -105,4 +105,48 @@ class PostinganController extends Controller
     ]);
     return redirect()->route('post.show', $post->id)->with('success', 'Postingan diupdate!');
 }
+
+// ✅ BARU — search location only, group by location
+public function search(Request $request)
+{
+    $query = $request->get('q', '');
+
+    if (strlen($query) < 2) {
+        return response()->json([]);
+    }
+
+    $posts = Postingan::with(['user', 'photos'])
+        ->where('location', 'like', "%{$query}%")  // hanya location
+        ->latest()
+        ->limit(50)
+        ->get();
+
+    if ($posts->isEmpty()) {
+        return response()->json([]);
+    }
+
+    // Group by location
+    $grouped = $posts->groupBy('location')->map(function ($items, $location) {
+        return [
+            'location'    => $location,
+            'total_posts' => $items->count(),
+            'posts'       => $items->map(function ($p) {
+                return [
+                    'id'          => $p->id,
+                    'title'       => $p->title,
+                    'travel_date' => $p->travel_date
+                                        ? \Carbon\Carbon::parse($p->travel_date)->format('d M Y')
+                                        : null,
+                    'author'      => $p->user->name ?? 'Unknown',
+                    'photo'       => $p->photos->first()
+                                        ? \Storage::url($p->photos->first()->file_path)
+                                        : null,
+                    'url'         => route('post.show', $p->id),
+                ];
+            })->values(),
+        ];
+    })->values();
+
+    return response()->json($grouped);
+}
 }

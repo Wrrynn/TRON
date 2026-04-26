@@ -87,24 +87,63 @@ class PostinganController extends Controller
     }
 
     public function update(Request $request, $id)
-{
-    $post = Postingan::findOrFail($id);
-    if ($post->user_id !== Auth::id()) {
-        return redirect()->route('dashboard')->with('error', 'Akses ditolak.');
+    {
+        $post = Postingan::findOrFail($id);
+        if ($post->user_id !== Auth::id()) {
+            return redirect()->route('dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        $request->validate([
+            'title'    => 'required|string|max:200',
+            'location' => 'required|string|max:200',
+        ]);
+
+        // Handle destinations
+        $destinations = [];
+        if ($request->destinations) {
+            $destinations = array_values(array_filter($request->destinations, function($d) {
+                return !empty($d['name']);
+            }));
+        }
+        // Fallback: if destinations are sent as JSON string
+        if (is_string($request->destinations)) {
+            $destinations = json_decode($request->destinations, true) ?? [];
+        }
+
+        $post->update([
+            'title'        => $request->title,
+            'location'     => $request->location,
+            'story'        => $request->story,
+            'destinations' => json_encode($destinations),
+            'total_budget' => $request->total_budget ?? 0,
+            'travel_date'  => $request->travel_date,
+        ]);
+
+        // Handle new photo uploads
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $foto) {
+                $path = $foto->store('post_photos', 'public');
+                FotoPostingan::create([
+                    'travel_post_id' => $post->id,
+                    'file_path'      => $path,
+                ]);
+            }
+        }
+
+        // Handle photo deletions
+        if ($request->has('delete_photos')) {
+            foreach ($request->delete_photos as $photoId) {
+                $photo = FotoPostingan::where('travel_post_id', $post->id)
+                                      ->where('id', $photoId)->first();
+                if ($photo) {
+                    Storage::disk('public')->delete($photo->file_path);
+                    $photo->delete();
+                }
+            }
+        }
+
+        return redirect()->route('post.show', $post->id)->with('success', 'Postingan diupdate!');
     }
-    $request->validate([
-        'title'    => 'required|string|max:200',
-        'location' => 'required|string|max:200',
-    ]);
-    $post->update([
-        'title'        => $request->title,
-        'location'     => $request->location,
-        'story'        => $request->story,
-        'total_budget' => $request->total_budget ?? 0,
-        'travel_date'  => $request->travel_date,
-    ]);
-    return redirect()->route('post.show', $post->id)->with('success', 'Postingan diupdate!');
-}
 
 // ✅ BARU — search location only, group by location
 public function search(Request $request)

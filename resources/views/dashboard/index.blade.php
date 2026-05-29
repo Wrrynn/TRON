@@ -19,14 +19,14 @@
                 <div class="pp-av">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
                 <div>
                     <div class="pp-name">{{ $user->name }}</div>
-                    <div class="pp-handle">@{{ strtolower(str_replace(' ', '', $user->name)) }}</div>
+                    <div class="pp-handle">{{ '@' . strtolower(str_replace(' ', '', $user->name)) }}</div>
                 </div>
             </div>
             <div class="pp-stats">
                 <div><span class="pp-stat-num">{{ $postingan->count() }}</span><span class="pp-stat-label">Jejak</span></div>
             </div>
             <div class="pp-btns">
-                <button class="pp-btn" disabled>Edit Profil</button>
+                <a href="{{ route('profile.edit') }}" class="pp-btn">Edit Profil</a>
                 <button class="pp-btn" onclick="shareProfile()">Bagikan Profil</button>
                 <div class="pp-icon-btn"></div>
             </div>

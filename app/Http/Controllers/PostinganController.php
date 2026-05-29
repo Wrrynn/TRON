@@ -50,7 +50,7 @@ class PostinganController extends Controller
     {
         $post     = Postingan::with(['user', 'photos', 'ratings'])->findOrFail($id);
         $myRating = RatingPostingan::where('user_id', Auth::id())
-                                   ->where('travel_post_id', $id)->first();
+            ->where('travel_post_id', $id)->first();
         return view('post.show', compact('post', 'myRating'));
     }
 
@@ -101,7 +101,7 @@ class PostinganController extends Controller
         // Handle destinations
         $destinations = [];
         if ($request->destinations) {
-            $destinations = array_values(array_filter($request->destinations, function($d) {
+            $destinations = array_values(array_filter($request->destinations, function ($d) {
                 return !empty($d['name']);
             }));
         }
@@ -134,7 +134,7 @@ class PostinganController extends Controller
         if ($request->has('delete_photos')) {
             foreach ($request->delete_photos as $photoId) {
                 $photo = FotoPostingan::where('travel_post_id', $post->id)
-                                      ->where('id', $photoId)->first();
+                    ->where('id', $photoId)->first();
                 if ($photo) {
                     Storage::disk('public')->delete($photo->file_path);
                     $photo->delete();
@@ -145,47 +145,49 @@ class PostinganController extends Controller
         return redirect()->route('post.show', $post->id)->with('success', 'Postingan diupdate!');
     }
 
-// ✅ BARU — search location only, group by location
-public function search(Request $request)
-{
-    $query = $request->get('q', '');
+    public function search(Request $request)
+    {
+        $query = $request->get('q', '');
 
-    if (strlen($query) < 2) {
-        return response()->json([]);
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $posts = Postingan::with(['user', 'photos'])
+            ->where(function ($q) use ($query) {
+                $q->where('location', 'like', "%{$query}%")
+                    ->orWhere('destinations', 'like', "%{$query}%")
+                    ->orWhere('title', 'like', "%{$query}%");
+            })
+            ->latest()
+            ->limit(50)
+            ->get();
+
+        if ($posts->isEmpty()) {
+            return response()->json([]);
+        }
+
+        $grouped = $posts->groupBy('location')->map(function ($items, $location) {
+            return [
+                'location'    => $location,
+                'total_posts' => $items->count(),
+                'posts'       => $items->map(function ($p) {
+                    return [
+                        'id'          => $p->id,
+                        'title'       => $p->title,
+                        'travel_date' => $p->travel_date
+                            ? \Carbon\Carbon::parse($p->travel_date)->format('d M Y')
+                            : null,
+                        'author'      => $p->user->name ?? 'Unknown',
+                        'photo'       => $p->photos->first()
+                            ? \Storage::url($p->photos->first()->file_path)
+                            : null,
+                        'url'         => route('post.show', $p->id),
+                    ];
+                })->values(),
+            ];
+        })->values();
+
+        return response()->json($grouped);
     }
-
-    $posts = Postingan::with(['user', 'photos'])
-        ->where('location', 'like', "%{$query}%")  // hanya location
-        ->latest()
-        ->limit(50)
-        ->get();
-
-    if ($posts->isEmpty()) {
-        return response()->json([]);
-    }
-
-    // Group by location
-    $grouped = $posts->groupBy('location')->map(function ($items, $location) {
-        return [
-            'location'    => $location,
-            'total_posts' => $items->count(),
-            'posts'       => $items->map(function ($p) {
-                return [
-                    'id'          => $p->id,
-                    'title'       => $p->title,
-                    'travel_date' => $p->travel_date
-                                        ? \Carbon\Carbon::parse($p->travel_date)->format('d M Y')
-                                        : null,
-                    'author'      => $p->user->name ?? 'Unknown',
-                    'photo'       => $p->photos->first()
-                                        ? \Storage::url($p->photos->first()->file_path)
-                                        : null,
-                    'url'         => route('post.show', $p->id),
-                ];
-            })->values(),
-        ];
-    })->values();
-
-    return response()->json($grouped);
-}
 }

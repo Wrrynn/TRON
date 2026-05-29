@@ -33,17 +33,3 @@ class Postingan extends Model
         return round($this->ratings()->avg('score'), 1) ?: 0;
     }
 }
-
-// Foto masuk ke kelas Postingan (1 file)
-class FotoPostingan extends Model
-{
-    protected $table = 'post_photos';
-    protected $fillable = ['travel_post_id', 'file_path'];
-}
-
-// Rating masuk ke kelas Postingan (1 file)
-class RatingPostingan extends Model
-{
-    protected $table = 'ratings';
-    protected $fillable = ['user_id', 'travel_post_id', 'score'];
-}

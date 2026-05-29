@@ -9,7 +9,7 @@ use App\Models\User;
 
 class AuthController extends Controller
 {
-    
+
     /**
      * Bagian register 
      * Tampilkan halaman form register
@@ -27,8 +27,8 @@ class AuthController extends Controller
         // 1. Validasi input dari form
         $request->validate([
             'name'     => 'required|string|max:100',
-            'email'    => 'required|email|unique:users,email', 
-            'password' => 'required|string|min:8|confirmed',   
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
         ], [
             // Pesan error 
             'name.required'          => 'Nama wajib diisi.',
@@ -90,7 +90,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard'))
-                             ->with('success', 'Selamat datang kembali, ' . Auth::user()->name . '! ✈️');
+                ->with('success', 'Selamat datang kembali, ' . Auth::user()->name . '! ✈️');
         }
 
         // 5. Login gagal akan ada pesan error
@@ -116,5 +116,23 @@ class AuthController extends Controller
 
         // 4. Redirect ke halaman login
         return redirect()->route('login')->with('success', 'Kamu berhasil logout. Sampai jumpa! 👋');
+    }
+
+    public function editProfile()
+    {
+        return view('profile_edit');
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        Auth::user()->update([
+            'name' => $request->name,
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Nama berhasil diupdate!');
     }
 }

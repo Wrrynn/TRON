@@ -38,6 +38,51 @@ const btns = {
     create:  document.getElementById('btnCreate'),
 };
 
+async function loadFeatured() {
+    const results = document.getElementById('searchResults');
+    results.innerHTML = `<div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:12px">⭐ Jejak Terpopuler</div>`;
+
+    try {
+        const res  = await fetch('/featured');
+        const data = await res.json();
+
+        if (!data.length) {
+            results.innerHTML += `<div style="text-align:center;padding:20px 0;color:rgba(255,255,255,.3);font-size:13px">Belum ada jejak.</div>`;
+            return;
+        }
+
+        data.forEach(p => {
+            results.innerHTML += `
+            <a href="${p.url}" style="display:flex;gap:12px;align-items:center;
+               padding:10px 12px;border-radius:10px;margin-bottom:6px;
+               background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+               text-decoration:none;transition:background .15s"
+               onmouseover="this.style.background='rgba(124,92,252,.15)'"
+               onmouseout="this.style.background='rgba(255,255,255,.04)'">
+                <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;
+                            flex-shrink:0;background:rgba(255,255,255,.06)">
+                    ${p.photo
+                        ? `<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover">`
+                        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px">📍</div>`
+                    }
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;color:white;
+                                white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                        ${escHtml(p.title)}
+                    </div>
+                    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">
+                        ${escHtml(p.location)} · oleh ${escHtml(p.author)}
+                        ${p.rating ? ' · ⭐ ' + p.rating : ''}
+                    </div>
+                </div>
+            </a>`;
+        });
+    } catch(e) {
+        results.innerHTML += `<div style="color:rgba(255,100,100,.5);font-size:13px">Gagal memuat.</div>`;
+    }
+}
+
 function openPanel(name) {
     if (currentPanel === name) { closePanel(); return; }
     Object.values(panels).forEach(p => p && (p.style.display = 'none'));
@@ -50,11 +95,8 @@ function openPanel(name) {
 
     if (name === 'search') {
         document.getElementById('searchInput').value = '';
-        document.getElementById('searchResults').innerHTML = `
-            <div style="text-align:center; padding:40px 0; color:rgba(255,255,255,.3); font-size:13px">
-                Ketik nama lokasi untuk menemukan jejak perjalanan.
-            </div>`;
-    }
+        loadFeatured();
+    }   
 }
 
 function closePanel() {
@@ -156,7 +198,7 @@ function renderSearchResults(data, query) {
                         ${escHtml(p.title)}
                     </div>
                     <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">
-                        oleh ${escHtml(p.author)}${p.travel_date ? ' · ' + p.travel_date : ''}
+                        oleh ${escHtml(p.author)}${p.travel_date ? ' · ' + p.travel_date : ''}${p.rating ? ' · ⭐ ' + p.rating : ''}
                     </div>
                 </div>
                 <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:rgba(255,255,255,.2);

@@ -46,7 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/post/{id}', [PostinganController::class, 'show'])->name('post.show');
     Route::delete('/post/{id}', [PostinganController::class, 'destroy'])->name('post.destroy');
     Route::post('/post/{id}/rate', [PostinganController::class, 'rate'])->name('post.rate');
-
+    Route::get('/featured', [PostinganController::class, 'featured'])->name('post.featured');
     Route::get('/post/{id}/edit', [PostinganController::class, 'edit'])->name('post.edit');
     Route::put('/post/{id}', [PostinganController::class, 'update'])->name('post.update');
 

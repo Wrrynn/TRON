@@ -1,9 +1,13 @@
 {
   "version": 2,
   "framework": null,
+  "buildCommand": "composer install && npm install && npm run build",
+  "installCommand": "composer install",
   "functions": {
     "api/index.php": {
-      "runtime": "vercel-php@0.7.1"
+      "runtime": "vercel-php@0.7.1",
+      "memory": 3008,
+      "maxDuration": 60
     }
   },
   "routes": [

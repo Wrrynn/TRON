@@ -99,7 +99,7 @@
                     <div class="current-photos">
                         @foreach($post->photos as $photo)
                             <div class="current-photo-item">
-                                <img src="{{ Storage::url($photo->file_path) }}" alt="Foto">
+                                <img src="{{ foto_url($photo->file_path) }}" alt="Foto">
                                 <label>
                                     <input type="checkbox" name="delete_photos[]" value="{{ $photo->id }}"> Hapus
                                 </label>

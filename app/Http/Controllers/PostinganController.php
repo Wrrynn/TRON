@@ -8,9 +8,62 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Postingan;
 use App\Models\FotoPostingan;
 use App\Models\RatingPostingan;
+use App\Services\CloudinaryService;
 
 class PostinganController extends Controller
 {
+    private CloudinaryService $cloudinary;
+
+    public function __construct(CloudinaryService $cloudinary)
+    {
+        $this->cloudinary = $cloudinary;
+    }
+
+    /* ── Helper: simpan satu foto (Cloudinary dulu, fallback local) ── */
+    private function simpanFoto($file): string
+    {
+        // Coba upload ke Cloudinary jika sudah dikonfigurasi
+        $cloudUrl = $this->cloudinary->upload($file, 'post_photos');
+        if ($cloudUrl) {
+            return $cloudUrl;   // URL penuh: https://res.cloudinary.com/...
+        }
+
+        // Fallback: simpan lokal
+        return $file->store('post_photos', 'public');
+    }
+
+    /* ── Helper: hapus satu foto ── */
+    private function hapusFoto(string $path): void
+    {
+        if (CloudinaryService::isCloudinaryUrl($path)) {
+            $this->cloudinary->delete($path);
+        } else {
+            Storage::disk('public')->delete($path);
+        }
+    }
+
+    /* ── Helper: resolve URL untuk ditampilkan di view ── */
+    public static function fotoUrl(string $path): string
+    {
+        if (CloudinaryService::isCloudinaryUrl($path)) {
+            return $path;   // sudah URL penuh
+        }
+        // Cek apakah file lokal ada
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::url($path);
+        }
+        // Placeholder jika file tidak ditemukan
+        return 'data:image/svg+xml,' . rawurlencode(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">'
+          . '<rect width="400" height="300" fill="#1e1e28"/>'
+          . '<text x="50%" y="45%" text-anchor="middle" fill="rgba(255,255,255,.25)" font-size="40">🗺</text>'
+          . '<text x="50%" y="62%" text-anchor="middle" fill="rgba(255,255,255,.18)" font-size="13" font-family="sans-serif">Foto tidak tersedia</text>'
+          . '</svg>'
+        );
+    }
+
+    /* ─────────────────────────────────────────── */
+
     public function store(Request $request)
     {
         $request->validate([
@@ -35,10 +88,9 @@ class PostinganController extends Controller
 
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $foto) {
-                $path = $foto->store('post_photos', 'public');
                 FotoPostingan::create([
                     'travel_post_id' => $post->id,
-                    'file_path'      => $path,
+                    'file_path'      => $this->simpanFoto($foto),
                 ]);
             }
         }
@@ -61,7 +113,7 @@ class PostinganController extends Controller
             return redirect()->route('dashboard')->with('error', 'Akses ditolak.');
         }
         foreach ($post->photos as $foto) {
-            Storage::disk('public')->delete($foto->file_path);
+            $this->hapusFoto($foto->file_path);
         }
         $post->delete();
         return redirect()->route('dashboard')->with('success', 'Postingan dihapus.');
@@ -119,10 +171,9 @@ class PostinganController extends Controller
 
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $foto) {
-                $path = $foto->store('post_photos', 'public');
                 FotoPostingan::create([
                     'travel_post_id' => $post->id,
-                    'file_path'      => $path,
+                    'file_path'      => $this->simpanFoto($foto),
                 ]);
             }
         }
@@ -132,7 +183,7 @@ class PostinganController extends Controller
                 $photo = FotoPostingan::where('travel_post_id', $post->id)
                     ->where('id', $photoId)->first();
                 if ($photo) {
-                    Storage::disk('public')->delete($photo->file_path);
+                    $this->hapusFoto($photo->file_path);
                     $photo->delete();
                 }
             }
@@ -141,51 +192,45 @@ class PostinganController extends Controller
         return redirect()->route('post.show', $post->id)->with('success', 'Postingan diupdate!');
     }
 
+    /* ── Resolve URL foto (helper untuk view/JSON) ── */
+    private function resolvePhotoUrl(?FotoPostingan $foto): ?string
+    {
+        if (!$foto) return null;
+        return self::fotoUrl($foto->file_path);
+    }
+
     public function search(Request $request)
     {
         $query = $request->get('q', '');
-
-        if (strlen($query) < 2) {
-            return response()->json([]);
-        }
+        if (strlen($query) < 2) return response()->json([]);
 
         $posts = Postingan::with(['user', 'photos'])
             ->withAvg('ratings', 'score')
             ->where(function ($q) use ($query) {
                 $q->where('location', 'like', "%{$query}%")
-                    ->orWhere('destinations', 'like', "%{$query}%")
-                    ->orWhere('title', 'like', "%{$query}%");
+                  ->orWhere('destinations', 'like', "%{$query}%")
+                  ->orWhere('title', 'like', "%{$query}%");
             })
             ->orderByDesc('ratings_avg_score')
-            ->latest()
-            ->limit(50)
-            ->get();
+            ->latest()->limit(50)->get();
 
-        if ($posts->isEmpty()) {
-            return response()->json([]);
-        }
+        if ($posts->isEmpty()) return response()->json([]);
 
         $grouped = $posts->groupBy('location')->map(function ($items, $location) {
             return [
                 'location'    => $location,
                 'total_posts' => $items->count(),
-                'posts'       => $items->map(function ($p) {
-                    return [
-                        'id'          => $p->id,
-                        'title'       => $p->title,
-                        'travel_date' => $p->travel_date
-                            ? \Carbon\Carbon::parse($p->travel_date)->format('d M Y')
-                            : null,
-                        'author'      => $p->user->name ?? 'Unknown',
-                        'photo'       => $p->photos->first()
-                            ? \Storage::url($p->photos->first()->file_path)
-                            : null,
-                        'rating'      => $p->ratings_avg_score
-                            ? round($p->ratings_avg_score, 1)
-                            : null,
-                        'url'         => route('post.show', $p->id),
-                    ];
-                })->values(),
+                'posts'       => $items->map(fn($p) => [
+                    'id'          => $p->id,
+                    'title'       => $p->title,
+                    'travel_date' => $p->travel_date
+                        ? \Carbon\Carbon::parse($p->travel_date)->format('d M Y') : null,
+                    'author'      => $p->user->name ?? 'Unknown',
+                    'photo'       => $this->resolvePhotoUrl($p->photos->first()),
+                    'rating'      => $p->ratings_avg_score
+                        ? round($p->ratings_avg_score, 1) : null,
+                    'url'         => route('post.show', $p->id),
+                ])->values(),
             ];
         })->values();
 
@@ -197,26 +242,19 @@ class PostinganController extends Controller
         $posts = Postingan::with(['user', 'photos'])
             ->withAvg('ratings', 'score')
             ->orderByDesc('ratings_avg_score')
-            ->limit(5)
-            ->get();
+            ->limit(5)->get();
 
-        return response()->json($posts->map(function ($p) {
-            return [
-                'id'          => $p->id,
-                'title'       => $p->title,
-                'location'    => $p->location,
-                'travel_date' => $p->travel_date
-                    ? \Carbon\Carbon::parse($p->travel_date)->format('d M Y')
-                    : null,
-                'author'      => $p->user->name ?? 'Unknown',
-                'photo'       => $p->photos->first()
-                    ? \Storage::url($p->photos->first()->file_path)
-                    : null,
-                'rating'      => $p->ratings_avg_score
-                    ? round($p->ratings_avg_score, 1)
-                    : null,
-                'url'         => route('post.show', $p->id),
-            ];
-        }));
+        return response()->json($posts->map(fn($p) => [
+            'id'          => $p->id,
+            'title'       => $p->title,
+            'location'    => $p->location,
+            'travel_date' => $p->travel_date
+                ? \Carbon\Carbon::parse($p->travel_date)->format('d M Y') : null,
+            'author'      => $p->user->name ?? 'Unknown',
+            'photo'       => $this->resolvePhotoUrl($p->photos->first()),
+            'rating'      => $p->ratings_avg_score
+                ? round($p->ratings_avg_score, 1) : null,
+            'url'         => route('post.show', $p->id),
+        ]));
     }
 }

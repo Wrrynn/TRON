@@ -60,9 +60,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/smart/stats',          [SmartSystemController::class, 'personalStats']);
 
     Route::get('/profile/{id}', function ($id) {
-    $user = User::findOrFail($id);
-    return view('profile', compact('user'));
-})->name('profile.show');
+        $user = User::with(['postingan.photos'])->findOrFail($id);
+        return view('profile', compact('user'));
+    })->name('profile.show');
 });
 
 

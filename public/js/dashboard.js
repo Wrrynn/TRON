@@ -4,9 +4,10 @@ const map = L.map('main-map', {
     zoomControl: false
 });
 
-// Tile Stadia Alidade Smooth Dark — dark mode nyaman, mirip Mapbox
-L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-    attribution: '© <a href="https://stadiamaps.com/">Stadia Maps</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+// Tile CartoDB Dark Matter — gratis tanpa API key
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
     maxZoom: 20
 }).addTo(map);
 

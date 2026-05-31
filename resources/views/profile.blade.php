@@ -134,7 +134,7 @@
                 <a href="{{ route('post.show', $p->id) }}" class="card">
                     
                     @if($p->photos->first())
-                        <img src="{{ Storage::url($p->photos->first()->file_path) }}">
+                        <img src="{{ foto_url($p->photos->first()->file_path) }}">
                     @endif
 
                     <div class="overlay">

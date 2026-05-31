@@ -228,7 +228,7 @@ DB_HOST=mysql-3958c3e0-nabilarosdika97-3270.c.aivencloud.com
 DB_PORT=23819
 DB_DATABASE=defaultdb
 DB_USERNAME=avnadmin
-DB_PASSWORD=AVNS_up732yIf3yK5QY_7BRV
+DB_PASSWORD=your_aiven_password
 
 # Session
 SESSION_DRIVER=database

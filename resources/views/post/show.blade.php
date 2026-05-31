@@ -24,7 +24,7 @@
         <div class="foto-slider" id="fotoSlider">
             @foreach($post->photos as $foto)
                 <div class="foto-slide">
-                    <img src="{{ Storage::url($foto->file_path) }}" alt="">
+                    <img src="{{ foto_url($foto->file_path) }}" alt="">
                 </div>
             @endforeach
         </div>

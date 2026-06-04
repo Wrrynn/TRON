@@ -4,12 +4,14 @@ define('LARAVEL_START', microtime(true));
 
 /*
 |--------------------------------------------------------------------------
-| Vercel Serverless Bootstrap untuk Laravel
+| Vercel Serverless Bootstrap untuk Laravel (entry point di ROOT)
 |--------------------------------------------------------------------------
+| File ini SENGAJA di root (bukan di folder api/) supaya Vercel mount-nya
+| di "/" dan TIDAK mengupas prefix /api — Laravel menerima path penuh
+| (mis. /api/posts), sehingga route API berfungsi.
 */
 
-/* 1. Paksa Laravel tahu request ini HTTPS (Vercel terminasi TLS di edge,
-|     lalu forward ke fungsi PHP via http). Tanpa ini asset() jadi http://. */
+/* 1. Paksa Laravel tahu request ini HTTPS (Vercel terminasi TLS di edge). */
 if (
     (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
     || (isset($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on')
@@ -18,12 +20,11 @@ if (
     $_SERVER['SERVER_PORT'] = 443;
 }
 
-/* 2. Arahkan log ke stderr supaya muncul di Vercel Function Logs. */
+/* 2. Log ke stderr supaya muncul di Vercel Function Logs. */
 putenv('LOG_CHANNEL=stderr');
 $_ENV['LOG_CHANNEL'] = $_SERVER['LOG_CHANNEL'] = 'stderr';
 
-/* 3. Filesystem Vercel read-only kecuali /tmp.
-|     Buat struktur storage + bootstrap cache yang writable di /tmp. */
+/* 3. Filesystem Vercel read-only kecuali /tmp → storage writable di /tmp. */
 $tmpStorage = '/tmp/storage';
 foreach ([
     $tmpStorage . '/app/public',
@@ -39,11 +40,10 @@ foreach ([
     }
 }
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
-$app = require_once __DIR__ . '/../bootstrap/app.php';
+$app = require_once __DIR__ . '/bootstrap/app.php';
 
-/* 4. Pindahkan storage path Laravel ke /tmp (writable). */
 $app->useStoragePath($tmpStorage);
 
 $kernel   = $app->make(Illuminate\Contracts\Http\Kernel::class);

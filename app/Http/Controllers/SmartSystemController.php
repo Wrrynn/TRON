@@ -131,7 +131,7 @@ class SmartSystemController extends Controller
                 'title'      => $p->title,
                 'location'   => $p->location,
                 'thumbnail'  => $p->photos->first()
-                                   ? \Storage::url($p->photos->first()->file_path)
+                                   ? $p->photos->first()->publicUrl()
                                    : null,
                 'avg_rating' => round($p->ratings_avg_score ?? 0, 1),
                 'author'     => $p->user->name ?? 'Unknown',

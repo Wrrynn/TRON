@@ -73,12 +73,21 @@ class PostApiController extends Controller
         ]);
 
         if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $foto) {
-                $cloud = $this->cloudinary->upload($foto, 'post_photos');
-                FotoPostingan::create([
+            foreach ($request->file('photos') as $file) {
+                $cloud = $this->cloudinary->upload($file, 'post_photos');
+                $foto  = FotoPostingan::create([
                     'travel_post_id' => $post->id,
-                    'file_path'      => $cloud ?: $foto->store('post_photos', 'public'),
+                    'file_path'      => $cloud ?: 'db',
                 ]);
+                if (!$cloud) {
+                    \Illuminate\Support\Facades\DB::table('photo_blobs')->insert([
+                        'foto_id'    => $foto->id,
+                        'mime'       => $file->getMimeType() ?: 'image/jpeg',
+                        'data'       => base64_encode(file_get_contents($file->getRealPath())),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
         }
 
@@ -102,6 +111,8 @@ class PostApiController extends Controller
         foreach ($post->photos as $foto) {
             if (CloudinaryService::isCloudinaryUrl($foto->file_path)) {
                 $this->cloudinary->delete($foto->file_path);
+            } elseif ($foto->file_path === 'db') {
+                \Illuminate\Support\Facades\DB::table('photo_blobs')->where('foto_id', $foto->id)->delete();
             } else {
                 Storage::disk('public')->delete($foto->file_path);
             }
@@ -184,18 +195,15 @@ class PostApiController extends Controller
         ];
     }
 
-    /** URL foto absolut; null jika file lokal hilang (Flutter tampilkan placeholder sendiri). */
+    /** URL foto absolut; null jika benar-benar tidak ada (Flutter tampilkan placeholder sendiri). */
     private function photoUrl(?FotoPostingan $foto): ?string
     {
         if (!$foto) return null;
         $path = $foto->file_path;
 
-        if (CloudinaryService::isCloudinaryUrl($path)) {
-            return $path;
-        }
-        if (Storage::disk('public')->exists($path)) {
-            return asset('storage/' . $path);
-        }
+        if (CloudinaryService::isCloudinaryUrl($path)) return $path;
+        if ($path === 'db') return url('/photo/' . $foto->id);
+        if ($path && Storage::disk('public')->exists($path)) return asset('storage/' . $path);
         return null;
     }
 }

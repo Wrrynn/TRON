@@ -45,6 +45,21 @@ foreach ([
     }
 }
 
+/* 5. Arahkan SEMUA cache Laravel ke /tmp (bootstrap/cache di /var/task
+|     bersifat read-only). Tanpa ini, package discovery gagal menulis manifest
+|     → provider inti seperti [view] tak ter-register → 500.
+|     WAJIB di-set SEBELUM bootstrap/app.php dibuat. */
+foreach ([
+    'APP_SERVICES_CACHE' => '/tmp/bootstrap/cache/services.php',
+    'APP_PACKAGES_CACHE' => '/tmp/bootstrap/cache/packages.php',
+    'APP_CONFIG_CACHE'   => '/tmp/bootstrap/cache/config.php',
+    'APP_ROUTES_CACHE'   => '/tmp/bootstrap/cache/routes.php',
+    'APP_EVENTS_CACHE'   => '/tmp/bootstrap/cache/events.php',
+] as $__k => $__v) {
+    putenv("$__k=$__v");
+    $_ENV[$__k] = $_SERVER[$__k] = $__v;
+}
+
 require __DIR__ . '/../vendor/autoload.php';
 
 $app = require_once __DIR__ . '/../bootstrap/app.php';

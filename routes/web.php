@@ -11,6 +11,9 @@ use App\Models\User;
 | Web Routes - Tripmo
 */
 
+// DIAGNOSTIK: route web baru untuk cek apakah web.php fresh atau ter-cache
+Route::get('/webtest', fn () => response()->json(['web_fresh' => true]));
+
 // Halaman utama → redirect ke login jika belum login, dashboard jika sudah
 Route::get('/', function () {
     if (auth()->check()) {

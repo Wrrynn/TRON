@@ -4,14 +4,20 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
-        apiPrefix: 'mobile',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        // Daftarkan API routes secara EKSPLISIT (lebih andal di serverless
+        // dibanding parameter `api:` yang bisa terlewat jika deteksi gagal).
+        then: function () {
+            Route::middleware('api')
+                ->prefix('mobile')
+                ->group(base_path('routes/api.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Vercel/proxy: percayai semua proxy agar HTTPS, host, dan IP

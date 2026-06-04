@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Models\Postingan;
+use App\Models\FotoPostingan;
+use App\Models\RatingPostingan;
 
 class AuthController extends Controller
 {
@@ -134,5 +138,40 @@ class AuthController extends Controller
         ]);
 
         return redirect()->route('dashboard')->with('success', 'Nama berhasil diupdate!');
+    }
+
+    /**
+     * Hapus akun beserta semua data terkait
+     * (postingan, foto + blob DB, dan rating).
+     */
+    public function deleteAccount(Request $request)
+    {
+        $user = Auth::user();
+
+        // Kumpulkan id postingan milik user
+        $postIds = Postingan::where('user_id', $user->id)->pluck('id');
+
+        if ($postIds->isNotEmpty()) {
+            // Hapus blob foto dari DB
+            $fotoIds = FotoPostingan::whereIn('travel_post_id', $postIds)->pluck('id');
+            if ($fotoIds->isNotEmpty()) {
+                DB::table('photo_blobs')->whereIn('foto_id', $fotoIds)->delete();
+            }
+            // Hapus foto & rating yang menempel pada postingan
+            FotoPostingan::whereIn('travel_post_id', $postIds)->delete();
+            RatingPostingan::whereIn('travel_post_id', $postIds)->delete();
+            Postingan::whereIn('id', $postIds)->delete();
+        }
+
+        // Hapus rating yang dibuat user di postingan orang lain
+        RatingPostingan::where('user_id', $user->id)->delete();
+
+        // Logout lalu hapus user
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        $user->delete();
+
+        return redirect()->route('login')->with('success', 'Akun kamu telah dihapus permanen. Sampai jumpa! 👋');
     }
 }

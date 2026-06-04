@@ -1,11 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PostinganController;
 use App\Http\Controllers\SmartSystemController;
-use App\Models\User; 
+use App\Models\User;
 
 /*
 | Web Routes - Tripmo
@@ -18,6 +19,19 @@ Route::get('/', function () {
     }
     return redirect()->route('login');
 });
+
+// Penyaji foto dari database (PUBLIK agar gambar tampil untuk semua, termasuk API).
+// Persisten di serverless/Vercel — tidak bergantung pada filesystem.
+Route::get('/photo/{id}', function ($id) {
+    $blob = DB::table('photo_blobs')->where('foto_id', $id)->first();
+    if (!$blob) {
+        abort(404);
+    }
+    return response(base64_decode($blob->data), 200, [
+        'Content-Type'  => $blob->mime ?: 'image/jpeg',
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+    ]);
+})->name('photo.show');
 
 
 // AUTENTIKASI (hanya untuk tamu / belum login)
@@ -39,6 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile/edit', [AuthController::class, 'editProfile'])->name('profile.edit');
     Route::post('/profile/update', [AuthController::class, 'updateProfile'])->name('profile.update');
+    Route::delete('/profile/delete', [AuthController::class, 'deleteAccount'])->name('profile.delete');
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 

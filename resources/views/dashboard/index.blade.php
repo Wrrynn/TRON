@@ -39,7 +39,7 @@
                     @foreach($postingan as $p)
                         <a href="{{ route('post.show', $p->id) }}" style="position: relative; aspect-ratio: 1; overflow: hidden; display: block; background: rgba(255, 255, 255, .04); border-radius: 8px">
                             @if($p->photos->first())
-                                <img src="{{ foto_url($p->photos->first()->file_path) }}" style="width: 100%; height: 100%; object-fit: cover; display: block" loading="lazy" alt="{{ $p->title }}">
+                                <img src="{{ foto_url($p->photos->first()) }}" style="width: 100%; height: 100%; object-fit: cover; display: block" loading="lazy" alt="{{ $p->title }}">
                             @else
                                 <div style="width: 100%; height: 100%; min-height: 80px; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, .3); font-size: 22px">🗺</div>
                             @endif

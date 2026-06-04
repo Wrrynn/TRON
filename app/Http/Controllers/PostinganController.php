@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use App\Models\Postingan;
 use App\Models\FotoPostingan;
 use App\Models\RatingPostingan;
@@ -19,47 +20,40 @@ class PostinganController extends Controller
         $this->cloudinary = $cloudinary;
     }
 
-    /* ── Helper: simpan satu foto (Cloudinary dulu, fallback local) ── */
-    private function simpanFoto($file): string
+    /* ── Helper: simpan satu foto & lampirkan ke post ──
+       Cloudinary (jika dikonfigurasi) → else simpan ke DATABASE (persisten
+       di serverless/Vercel). */
+    private function lampirkanFoto(int $postId, $file): void
     {
-        // Coba upload ke Cloudinary jika sudah dikonfigurasi
         $cloudUrl = $this->cloudinary->upload($file, 'post_photos');
-        if ($cloudUrl) {
-            return $cloudUrl;   // URL penuh: https://res.cloudinary.com/...
-        }
 
-        // Fallback: simpan lokal
-        return $file->store('post_photos', 'public');
+        $foto = FotoPostingan::create([
+            'travel_post_id' => $postId,
+            'file_path'      => $cloudUrl ?: 'db',
+        ]);
+
+        if (!$cloudUrl) {
+            DB::table('photo_blobs')->insert([
+                'foto_id'    => $foto->id,
+                'mime'       => $file->getMimeType() ?: 'image/jpeg',
+                'data'       => base64_encode(file_get_contents($file->getRealPath())),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
-    /* ── Helper: hapus satu foto ── */
-    private function hapusFoto(string $path): void
+    /* ── Helper: hapus satu foto (Cloudinary / DB blob / lokal) ── */
+    private function hapusFoto(FotoPostingan $foto): void
     {
+        $path = $foto->file_path;
         if (CloudinaryService::isCloudinaryUrl($path)) {
             $this->cloudinary->delete($path);
+        } elseif ($path === 'db') {
+            DB::table('photo_blobs')->where('foto_id', $foto->id)->delete();
         } else {
             Storage::disk('public')->delete($path);
         }
-    }
-
-    /* ── Helper: resolve URL untuk ditampilkan di view ── */
-    public static function fotoUrl(string $path): string
-    {
-        if (CloudinaryService::isCloudinaryUrl($path)) {
-            return $path;   // sudah URL penuh
-        }
-        // Cek apakah file lokal ada
-        if (Storage::disk('public')->exists($path)) {
-            return Storage::url($path);
-        }
-        // Placeholder jika file tidak ditemukan
-        return 'data:image/svg+xml,' . rawurlencode(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">'
-          . '<rect width="400" height="300" fill="#1e1e28"/>'
-          . '<text x="50%" y="45%" text-anchor="middle" fill="rgba(255,255,255,.25)" font-size="40">🗺</text>'
-          . '<text x="50%" y="62%" text-anchor="middle" fill="rgba(255,255,255,.18)" font-size="13" font-family="sans-serif">Foto tidak tersedia</text>'
-          . '</svg>'
-        );
     }
 
     /* ─────────────────────────────────────────── */
@@ -67,8 +61,9 @@ class PostinganController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title'    => 'required|string|max:200',
-            'location' => 'nullable|string|max:200',
+            'title'     => 'required|string|max:200',
+            'location'  => 'nullable|string|max:200',
+            'photos.*'  => 'nullable|image|max:5120', // maks 5MB/foto
         ]);
 
         $destinations = [];
@@ -88,10 +83,7 @@ class PostinganController extends Controller
 
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $foto) {
-                FotoPostingan::create([
-                    'travel_post_id' => $post->id,
-                    'file_path'      => $this->simpanFoto($foto),
-                ]);
+                $this->lampirkanFoto($post->id, $foto);
             }
         }
 
@@ -113,7 +105,7 @@ class PostinganController extends Controller
             return redirect()->route('dashboard')->with('error', 'Akses ditolak.');
         }
         foreach ($post->photos as $foto) {
-            $this->hapusFoto($foto->file_path);
+            $this->hapusFoto($foto);
         }
         $post->delete();
         return redirect()->route('dashboard')->with('success', 'Postingan dihapus.');
@@ -146,8 +138,9 @@ class PostinganController extends Controller
         }
 
         $request->validate([
-            'title'    => 'required|string|max:200',
-            'location' => 'nullable|string|max:200',
+            'title'     => 'required|string|max:200',
+            'location'  => 'nullable|string|max:200',
+            'photos.*'  => 'nullable|image|max:5120',
         ]);
 
         $destinations = [];
@@ -171,10 +164,7 @@ class PostinganController extends Controller
 
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $foto) {
-                FotoPostingan::create([
-                    'travel_post_id' => $post->id,
-                    'file_path'      => $this->simpanFoto($foto),
-                ]);
+                $this->lampirkanFoto($post->id, $foto);
             }
         }
 
@@ -183,7 +173,7 @@ class PostinganController extends Controller
                 $photo = FotoPostingan::where('travel_post_id', $post->id)
                     ->where('id', $photoId)->first();
                 if ($photo) {
-                    $this->hapusFoto($photo->file_path);
+                    $this->hapusFoto($photo);
                     $photo->delete();
                 }
             }
@@ -196,7 +186,7 @@ class PostinganController extends Controller
     private function resolvePhotoUrl(?FotoPostingan $foto): ?string
     {
         if (!$foto) return null;
-        return self::fotoUrl($foto->file_path);
+        return $foto->publicUrl();
     }
 
     public function search(Request $request)

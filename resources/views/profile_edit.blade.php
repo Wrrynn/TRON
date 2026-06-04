@@ -41,6 +41,26 @@
                 </button>
             </div>
         </form>
+
+        {{-- Zona berbahaya: hapus akun --}}
+        <div style="margin-top:28px; padding-top:22px; border-top:1px solid rgba(255,255,255,.08)">
+            <div style="color:#f87171; font-size:13px; font-weight:700; margin-bottom:6px">Zona Berbahaya</div>
+            <div style="color:rgba(255,255,255,.45); font-size:12px; line-height:1.5; margin-bottom:14px">
+                Menghapus akun akan menghapus permanen seluruh postingan, foto, dan rating kamu.
+                Tindakan ini tidak dapat dibatalkan.
+            </div>
+            <form action="{{ route('profile.delete') }}" method="POST"
+                  onsubmit="return confirm('Yakin ingin menghapus akun secara permanen? Semua data kamu akan hilang dan tidak bisa dikembalikan.')">
+                @csrf
+                @method('DELETE')
+                <button type="submit"
+                        style="width:100%; padding:12px; border-radius:10px;
+                               background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3);
+                               color:#f87171; font-size:14px; font-weight:600; cursor:pointer">
+                    Hapus Akun Saya
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

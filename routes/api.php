@@ -27,7 +27,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user',    [AuthApiController::class, 'me']);
     Route::post('/logout', [AuthApiController::class, 'logout']);
 
+    // --- Rute Profil User ---
+    // Gunakan POST dengan _method=PUT dari Flutter untuk update profil yang mengandung gambar
+    Route::post('/user/update', [AuthApiController::class, 'updateProfile']); 
+    Route::delete('/user', [AuthApiController::class, 'destroyAccount']);
+
+    // --- Rute Postingan ---
     Route::post('/posts',            [PostApiController::class, 'store']);
+    Route::get('/posts/{id}',        [PostApiController::class, 'show']); // Pastikan ini bisa diakses jika butuh token
+    
+    // Perbaikan Error Edit Postingan: 
+    // Laravel router akan menangkap request POST dari Flutter yang berisi '_method' => 'PUT'
+    Route::put('/posts/{id}',        [PostApiController::class, 'update']); 
+    
     Route::delete('/posts/{id}',     [PostApiController::class, 'destroy']);
     Route::post('/posts/{id}/rate',  [PostApiController::class, 'rate']);
 });

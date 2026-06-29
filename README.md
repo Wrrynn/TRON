@@ -255,7 +255,11 @@ php artisan migrate:rollback
 
 ## 📞 Support
 
+<<<<<<< HEAD
 Jika ada pertanyaan atau bug, hubungi tim developer atau buat issue di repository.
+=======
+Jika ada pertanyaan atau bug, hubungi tim developer atau buat issue di repository, Thankyouu
+>>>>>>> de8c39951c474beb2c0f2d3647aecb60b252a19a
 
 ---
 

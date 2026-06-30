@@ -177,15 +177,30 @@ class PostApiController extends Controller
         // Proses foto baru jika ada
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $file) {
+                // Mencoba upload ke Cloudinary terlebih dahulu
                 $cloud = $this->cloudinary->upload($file, 'post_photos');
-                FotoPostingan::create([
+                
+                // Menyimpan relasi foto di tabel post_photos
+                $foto = FotoPostingan::create([
                     'travel_post_id' => $post->id,
                     'file_path'      => $cloud ?: 'db',
                 ]);
+
+                // PERBAIKAN: Jika bukan dari Cloudinary, simpan bentuk fisiknya ke photo_blobs
+                if (!$cloud) {
+                    \Illuminate\Support\Facades\DB::table('photo_blobs')->insert([
+                        'foto_id'    => $foto->id,
+                        'mime'       => $file->getMimeType() ?: 'image/jpeg',
+                        'data'       => base64_encode(file_get_contents($file->getRealPath())),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
         }
 
         $post->load(['user', 'photos']);
+        
         return response()->json([
             'message' => 'Postingan diupdate',
             'data'    => $this->postDetail($post),
